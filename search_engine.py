@@ -1,20 +1,42 @@
+import os
 from embedder import Embedder
 from vector_store import VectorStore
-import numpy as np
+
 
 class SearchEngine:
     def __init__(self, index_path="data/index/faiss.index", metadata_path="data/index/metadata.json"):
-        """
-        Loads the FAISS index and metadata.
-        Initializes the embedder for query embedding.
-        """
         print("[INFO] Initializing Search Engine...")
 
-        self.embedder = Embedder()              # For converting questions → embeddings
-        self.vector_store = VectorStore()       # For searching embeddings
-        
-        # Load FAISS index + metadata
-        self.vector_store.load(index_path, metadata_path)
+        # Check index existence
+        if not os.path.exists(index_path):
+            raise FileNotFoundError(
+                f"[ERROR] FAISS index not found at '{index_path}'. "
+                "Please run build_index.py first."
+            )
+
+        # Check metadata existence
+        if not os.path.exists(metadata_path):
+            raise FileNotFoundError(
+                f"[ERROR] Metadata file not found at '{metadata_path}'. "
+                "Please run build_index.py first."
+            )
+
+        try:
+            self.embedder = Embedder()
+        except Exception as e:
+            raise RuntimeError(
+                f"[ERROR] Could not load embedding model: {e}\n"
+                "Make sure your environment is set correctly."
+            )
+
+        self.vector_store = VectorStore()
+
+        try:
+            self.vector_store.load(index_path, metadata_path)
+        except Exception as e:
+            raise RuntimeError(
+                f"[ERROR] Failed to load FAISS index or metadata: {e}"
+            )
 
         print("[INFO] Search Engine ready!")
 
@@ -22,12 +44,18 @@ class SearchEngine:
         """
         Perform semantic search on the index.
         """
-        print(f"[INFO] Searching for: {query}")
+        if not query.strip():
+            print("[WARN] Query cannot be empty.")
+            return []
 
-        # Convert query text to embedding
-        query_embedding = self.embedder.embed_text(query)
+        try:
+            query_embedding = self.embedder.embed_text(query)
+        except Exception as e:
+            print(f"[ERROR] Failed to embed query: {e}")
+            return []
 
-        # Perform FAISS search
         results = self.vector_store.search(query_embedding, k)
 
+        if not results:
+            print("[INFO] No results found for your query.")
         return results
