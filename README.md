@@ -224,17 +224,14 @@ GUI Features:
 
 ## 🖼 Screenshot Placeholders
 
-Home Screen:
+## Home Screen
 
-```
-docs/home_screenshot.png
-```
+![Home Screen](docs/home_screenshot.png)
 
-Search Results:
+## Search Results
 
-```
-docs/search_screenshot.png
-```
+![Search Results](docs/search_screenshot.png)
+
 
 ---
 
