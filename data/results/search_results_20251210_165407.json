@@ -1,0 +1,30 @@
+{
+    "query": "weather condition",
+    "results": [
+        {
+            "score": 1.162209153175354,
+            "filename": "20080111X00041.pdf",
+            "page": 2
+        },
+        {
+            "score": 1.1648435592651367,
+            "filename": "20080102X00002.pdf",
+            "page": 3
+        },
+        {
+            "score": 1.2392292022705078,
+            "filename": "20080124X00100.pdf",
+            "page": 4
+        },
+        {
+            "score": 1.246192455291748,
+            "filename": "20080111X00040.pdf",
+            "page": 3
+        },
+        {
+            "score": 1.2495872974395752,
+            "filename": "20080117X00064.pdf",
+            "page": 3
+        }
+    ]
+}

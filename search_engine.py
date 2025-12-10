@@ -2,19 +2,56 @@ import os
 import json
 from embedder import Embedder
 from vector_store import VectorStore
+import re
 
-def generate_snippet(text, max_length=200):
+import re
+
+def generate_snippet(text, query, max_length=250):
     """
-    Returns a short snippet from the page text.
-    Cuts long text to a maximum length.
+    Extract the most relevant sentence(s) based on the query.
+    Highlights query words.
     """
-    if not text:
+
+    if not text or not text.strip():
         return "[No text available]"
 
-    if len(text) <= max_length:
-        return text
+    # 1. Split text into sentences
+    sentences = re.split(r'(?<=[.!?]) +', text)
 
-    return text[:max_length] + "..."
+    query_words = [w.lower() for w in query.split()]
+
+    # 2. Score each sentence based on occurrence of query words
+    best_sentence = None
+    best_score = 0
+
+    for sentence in sentences:
+        sent_lower = sentence.lower()
+        score = sum(1 for w in query_words if w in sent_lower)
+
+        if score > best_score:
+            best_score = score
+            best_sentence = sentence
+
+    # 3. If no sentence matched query, fallback to first part of text
+    if not best_sentence:
+        best_sentence = text[:max_length]
+
+    # 4. If sentence is too long, trim it
+    if len(best_sentence) > max_length:
+        best_sentence = best_sentence[:max_length] + "..."
+
+    # 5. Highlight query words
+    snippet = best_sentence
+    for w in query_words:
+        snippet = re.sub(
+            rf"\b({re.escape(w)})\b",
+            r"**\1**",
+            snippet,
+            flags=re.IGNORECASE
+        )
+
+    return snippet
+
 
 
 class SearchEngine:
@@ -84,7 +121,8 @@ class SearchEngine:
                 # Find correct page content
                 for page in data["pages"]:
                     if page["page"] == page_num:
-                        snippet = generate_snippet(page["text"])
+                        snippet = generate_snippet(page["text"], query)
+
                         break
 
             except Exception as e:
