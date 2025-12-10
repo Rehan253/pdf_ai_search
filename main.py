@@ -60,10 +60,13 @@ def main():
             continue
 
         for res in results:
-            print(f"Score: {res['distance']:.4f}")
             print(f"File: {res['metadata']['filename']}")
             print(f"Page: {res['metadata']['page']}")
+            print(f"Score: {res['distance']:.4f}")
+
+            print(f"Snippet: {res['snippet']}")
             print("-----------------------------")
+
 
         # NEW: Ask user if they want to save results
         choice = input("\nDo you want to save these results to JSON? (y/n): ").strip().lower()
