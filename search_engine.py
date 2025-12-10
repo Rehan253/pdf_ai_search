@@ -91,26 +91,42 @@ class SearchEngine:
 
         print("[INFO] Search Engine ready!")
 
-    def search(self, query, k=5):
+    def search(self, query, k=5, threshold=1.2):
+        """
+        Perform semantic search on the index.
+        Applies a relevance threshold.
+        Generates snippet for each result.
+        """
+
         if not query.strip():
             print("[WARN] Query cannot be empty.")
             return []
 
+        # Convert query to embedding
         try:
             query_embedding = self.embedder.embed_text(query)
         except Exception as e:
             print(f"[ERROR] Failed to embed query: {e}")
             return []
 
-        results = self.vector_store.search(query_embedding, k)
+        # Get raw FAISS results
+        all_results = self.vector_store.search(query_embedding, k)
 
-        # Load snippets for each result
+        # Filter based on threshold
+        filtered = [r for r in all_results if r["distance"] <= threshold]
+
+        if not filtered:
+            print("[INFO] No relevant results found (all scores above threshold).")
+            return []
+
+        # --------- ENHANCE RESULTS WITH SNIPPETS ----------
         enhanced_results = []
-        for res in results:
+
+        for res in filtered:
             filename = res["metadata"]["filename"]
             page_num = res["metadata"]["page"]
 
-            json_path = os.path.join("data/extracted", filename.replace(".pdf", ".json"))
+            json_path = os.path.join("data", "extracted", filename.replace(".pdf", ".json"))
 
             snippet = "[Snippet unavailable]"
 
@@ -118,16 +134,16 @@ class SearchEngine:
                 with open(json_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
 
-                # Find correct page content
+                # Find correct page text
                 for page in data["pages"]:
                     if page["page"] == page_num:
                         snippet = generate_snippet(page["text"], query)
-
                         break
 
             except Exception as e:
-                print(f"[WARN] Could not load snippet from {json_path}: {e}")
+                print(f"[WARN] Could not generate snippet for {filename}: {e}")
 
+            # Add snippet to result
             enhanced_results.append({
                 "distance": res["distance"],
                 "metadata": res["metadata"],
@@ -135,8 +151,3 @@ class SearchEngine:
             })
 
         return enhanced_results
-
-
-
-
-
